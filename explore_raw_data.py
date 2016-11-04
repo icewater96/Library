@@ -21,33 +21,65 @@ import numpy  as np
 
 
 #%% 
+def numeric_metrics(df, column_name):
+    series = df[column_name]
+    description = df[column_name].describe()
+    return_dict = {}
+    return_dict['Min']          = description['min']
+    return_dict['Max']          = description['max']
+    return_dict['Mean']         = description['mean']
+    return_dict['25%']          = description['25%']
+    return_dict['Median']       = description['50%']
+    return_dict['75%']          = description['75%']
+    return_dict['Range']        = return_dict['Max'] - return_dict['Min']
+    return_dict['Sd']           = description['std']
+    return_dict['# of NaN']     = sum(np.isnan(series))
+
+    return return_dict
+
+def common_metrics(df, column_name):
+    series = df[column_name]
+    return_dict = {}
+    return_dict['Column Name']  = column_name
+    return_dict['Data Type']    = series.dtype
+    return_dict['Count']        = len(series)
+    return_dict['# of Uniques'] = series.nunique()
+    
+    sorted_uniques = np.sort(series.unique())
+    
+    window_size = min(5, len(sorted_uniques))
+    
+    return_dict['Smallest'] = str(sorted_uniques[:window_size])
+    return_dict['Largest']  = str(sorted_uniques[-window_size:])
+    
+    return return_dict
+
 def explore_columns(df):
     # By default, all columns are string now
     column_list = list(df.columns)
     
-    report_list = []
+    return_list = []
     for column in column_list:
         temp_data = df[column]
-        temp_dict = {}
-        temp_dict['Column Name'] = column
-        temp_dict['Data Type']   = temp_data.dtype
+        temp_dict = common_metrics(df, column)
 
-        if temp_data.dtype == 'int64':
-            temp_dict['Min'] = min(temp_data)
-            temp_dict['Max'] = max(temp_data)
-            temp_dict['Mean'] = np.mean(temp_data)
-            temp_dict['Median'] = np.median(temp_data)
-            temp_dict['# of NaN'] = sum(np.isnan(df.id))
-            temp_dict['Count'] = len(temp_data)
-            temp_dict['# of Uniques'] = temp_data.nunique()
-            sorted_uniques = np.sort(temp_data.unique())
-            temp_dict['Smallest'] = str(sorted_unique.head(5))
+        if (temp_data.dtype == 'int64') or (temp_data.dtype == 'float64'):
+            temp_dict.update(numeric_metrics(df, column))
             
-        report_list.append(temp_dict)
+        return_list.append(temp_dict)
 
+    return pd.DataFrame(return_list)
+    
+    
 #%% 
 if __name__ == '__main__':
     # By default, all columns are string now
-    df = pd.read_csv(r'D:\GitHub\Q\L_C\Data\LoanStats3b - trimmed.csv', 
+    df = pd.read_csv(r'example.csv', 
                      header = 0, 
                      low_memory = False)
+    
+    
+    column_description = explore_columns(df)
+    
+    if False:
+        column_description.to_csv('a.csv')
