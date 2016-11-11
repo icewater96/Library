@@ -18,6 +18,7 @@ Created on Tue Nov 01 13:42:14 2016
 
 import pandas as pd
 import numpy  as np
+import time 
 
 
 #%% 
@@ -68,12 +69,13 @@ def common_metrics(df = None, column_name = None, column_order_only = False):
     
     return return_value
 
-def explore_columns(df):
+def explore_columns(df, verbose = False):
     # By default, all columns are string now
     column_list = list(df.columns)
     column_order_for_export_2 = []
     return_list = []
     for column in column_list:
+        start_time = time.time()
         temp_data = df[column]
         temp_dict = common_metrics(df, column)
 
@@ -82,6 +84,9 @@ def explore_columns(df):
             column_order_for_export_2 = numeric_metrics(column_order_only = True)
             
         return_list.append(temp_dict)
+        
+        if verbose:
+            print 'Processing column: ' + column + ' toke ' + str(time.time() - start_time) + ' seconds.'
 
     column_order_for_export = common_metrics(column_order_only = True) + column_order_for_export_2
     return pd.DataFrame(return_list), column_order_for_export
