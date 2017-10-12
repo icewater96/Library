@@ -47,6 +47,7 @@ def numeric_metrics(df = None, column_name = None, column_order_only = False):
 def common_metrics(df = None, column_name = None, column_order_only = False):
     # Note: 
     #   Must update True segment if False segment is udpated
+    # column_order_only = True: only return column structure
     if column_order_only:
         return_value = ['Column Name', 'Data Type', 'Count', '# of Uniques', '# of NaN', 'Smallest', 'Largest' ]
     else:   
@@ -57,6 +58,9 @@ def common_metrics(df = None, column_name = None, column_order_only = False):
         return_dict['Count']        = len(series)
         return_dict['# of Uniques'] = series.nunique()
         return_dict['# of NaN']     = sum(pd.isnull(series))
+        
+        # Remove all NaNs
+        series.dropna(inplace = True)
         
         sorted_uniques = np.sort(series.unique())
         
@@ -86,7 +90,7 @@ def explore_columns(df, verbose = False):
         return_list.append(temp_dict)
         
         if verbose:
-            print 'Processing column ' + column + ' took ' + str(time.time() - start_time) + ' seconds.'
+            print ('Processing column ' + column + ' took ' + str(time.time() - start_time) + ' seconds.')
 
     column_order_for_export = common_metrics(column_order_only = True) + column_order_for_export_2
     return pd.DataFrame(return_list), column_order_for_export
@@ -95,12 +99,22 @@ def explore_columns(df, verbose = False):
 #%% 
 if __name__ == '__main__':
     # Generic part
-    data_df = pd.read_csv(r'example.csv', 
-                          header = 0, 
-                          low_memory = False, 
-                          encoding = 'utf-8')
+    file_pool = [r'..\Q\L_C\Data\LoanStats_securev1_2017Q2.csv',
+                 r'..\Q\L_C\Data\LoanStats_securev1_2017Q1.csv',
+                 r'..\Q\L_C\Data\LoanStats_securev1_2016Q4.csv',
+                 r'..\Q\L_C\Data\LoanStats_securev1_2016Q3.csv',
+                 r'..\Q\L_C\Data\LoanStats_securev1_2016Q2.csv',
+                 r'..\Q\L_C\Data\LoanStats_securev1_2016Q1.csv',
+                 r'..\Q\L_C\Data\LoanStats3d_securev1.csv',
+                 r'..\Q\L_C\Data\LoanStats3c_securev1.csv',
+                 ]
+    temp_list = []
+    for filename in file_pool:
+        temp_list.append(pd.read_csv(filename, header = 0, skiprows = 1, skipfooter = 2,
+                                     engine = 'python', low_memory = True, encoding = 'utf-8'))
+    data_df = pd.concat(temp_list, axis = 0)
     
-    data_description, data_column_order = explore_columns(data_df)
+    data_description, data_column_order = explore_columns(data_df, True)
     
     # The folloing is example-spefic application
     column_description = pd.read_excel('LCDataDictionary.xlsx')
